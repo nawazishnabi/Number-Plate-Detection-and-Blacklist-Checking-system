@@ -1,21 +1,22 @@
-from ultralytics import YOLO
 import cv2
+import numpy as np
 
 class PlateDetector:
-    def __init__(self):
-        self.model = None  # Don't load at startup!
-    
-    def _load_model(self):
-        if self.model is None:
-            self.model = YOLO('50w_best.pt')  # Load only on first request
-    
     def detect_plates(self, image_path):
-        self._load_model()  # Load here, not in __init__
-        results = self.model(image_path)
+        img = cv2.imread(image_path)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Simple contour-based detection
+        blur = cv2.GaussianBlur(gray, (5,5), 0)
+        edges = cv2.Canny(blur, 100, 200)
+        contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        
         plates = []
-        for r in results:
-            for box in r.boxes:
-                img = cv2.imread(image_path)
-                x1,y1,x2,y2 = map(int, box.xyxy[0])
-                plates.append(img[y1:y2, x1:x2])
-        return plates
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            ratio = w / float(h)
+            if 2.0 < ratio < 5.5 and w > 100:
+                plate = img[y:y+h, x:x+w]
+                plates.append(plate)
+        
+        return plates if plates else [img]  # fallback: return full image

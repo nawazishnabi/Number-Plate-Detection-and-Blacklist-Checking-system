@@ -11,13 +11,16 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import Flask app
-from web_app import app
+from web_app import app  
 
 # Set Tesseract path for Linux environment
 import pytesseract
 pytesseract.pytesseract.tesseract_cmd = os.environ.get('TESSERACT_PATH', '/usr/bin/tesseract')
 
-# This is the application object that gunicorn will use
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
+
+# This must exist for the import to work
+app = Flask(__name__)
